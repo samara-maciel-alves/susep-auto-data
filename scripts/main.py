@@ -8,7 +8,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 URL = "https://www2.susep.gov.br/redarq.asp?arq=BaseCompleta.zip"
-ARQUIVOS_DESEJADOS = {"ses_seguros.csv", "ses_ramos.csv", "ses_cias.csv"}
+ARQUIVOS_DESEJADOS = {"Ses_seguros.csv", "Ses_ramos.csv", "Ses_cias.csv"}
 PASTA_SAIDA = "data"
 
 def baixar_e_extrair_csvs(url, arquivos_desejados, pasta_saida):
