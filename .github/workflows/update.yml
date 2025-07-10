@@ -9,7 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # <--- ADICIONE ESTA LINHA AQUI
+      contents: write # Já adicionado, mas mantenha-o para permissão de escrita
+
     steps:
       - name: Clonar repositório
         uses: actions/checkout@v3
@@ -20,11 +21,20 @@ jobs:
           python-version: '3.10'
 
       - name: Instalar dependências
-        # Sugestão: Consolide as duas linhas de pip install em uma
         run: pip install pandas openpyxl xlrd requests certifi urllib3
 
-      # - name: Instalar dependências Python # Esta linha pode ser removida se você consolidar acima
-      #   run: pip install requests certifi pandas
+      # --- NOVO BLOCO: Configurar Git LFS ---
+      - name: Configurar Git LFS
+        run: |
+          # Garante que o Git LFS esteja instalado e inicializado no ambiente
+          git lfs install
+          # Informa ao Git LFS para rastrear todos os arquivos .csv dentro da pasta 'data/'
+          # Isso cria ou atualiza o arquivo .gitattributes
+          git lfs track "data/*.csv"
+          # Adiciona o .gitattributes ao stage, para que ele seja comitado
+          # O "|| true" evita que o comando falhe se o arquivo não tiver sido modificado ou já estiver no stage
+          git add .gitattributes || true
+      # --- FIM DO NOVO BLOCO ---
 
       - name: Rodar script de atualização
         run: python scripts/main.py
@@ -33,5 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/*.csv || true
+          # Adiciona tanto o .gitattributes (se ele ainda não estiver no stage) quanto os arquivos CSV
+          # O .gitattributes é crucial para o Git LFS saber como lidar com os arquivos grandes
+          git add .gitattributes data/*.csv || true
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
