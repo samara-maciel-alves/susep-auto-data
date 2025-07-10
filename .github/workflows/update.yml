@@ -21,6 +21,9 @@ jobs:
       - name: Instalar dependências
         run: pip install pandas openpyxl xlrd requests
 
+      - name: Instalar dependências Python
+        run: pip install requests certifi pandas
+
       - name: Rodar script de atualização
         run: python scripts/main.py
 
