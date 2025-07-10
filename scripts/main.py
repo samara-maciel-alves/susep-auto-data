@@ -12,7 +12,7 @@ os.makedirs("data", exist_ok=True)
 
 def download_and_extract_zip(url):
     print("🔄 Baixando arquivo da SUSEP...")
-    response = requests.get(url)
+    response = requests.get(url, verify=False)
     zipfile_obj = zipfile.ZipFile(BytesIO(response.content))
     return zipfile_obj
 
