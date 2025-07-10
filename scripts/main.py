@@ -1,6 +1,7 @@
 import os
 import zipfile
 import requests
+import certifi
 from io import BytesIO
 
 URL = "https://www2.susep.gov.br/redarq.asp?arq=BaseCompleta.zip"
@@ -11,7 +12,9 @@ arquivos_desejados = ["ses_seguros.csv", "ses_ramos.csv", "ses_cias.csv"]
 
 def download_and_extract_selected_csv(url):
     print("🔄 Baixando arquivo da SUSEP...")
-    response = requests.get(url)
+    
+    response = requests.get(url, verify=certifi.where())
+
     zipfile_obj = zipfile.ZipFile(BytesIO(response.content))
     
     print("Arquivos no ZIP:")
