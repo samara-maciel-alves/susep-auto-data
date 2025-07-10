@@ -24,10 +24,9 @@ jobs:
       - name: Rodar script de atualização
         run: python scripts/main.py
 
-      - name: Commit e push dos dados atualizados
+      - name: Commit e push dos arquivos extraídos
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/*.xls data/*.xlsx || true
-          git commit -m "Atualização automática dos dados SUSEP"
-          git push
+          git add data/*.csv || true
+          git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
