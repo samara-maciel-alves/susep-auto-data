@@ -13,8 +13,7 @@ PASTA_SAIDA = "data"
 
 def baixar_e_extrair_csvs(url, arquivos_desejados, pasta_saida):
     print("🔄 Baixando arquivo da SUSEP...")
-    resposta = requests.get(url, verify=certifi.where())
-    resposta.raise_for_status()
+    resposta = requests.get('https://www2.susep.gov.br/redarq.asp?arq=BaseCompleta.zip', verify=certifi.where())
 
     print("📦 Extraindo arquivos selecionados do ZIP...")
     with zipfile.ZipFile(io.BytesIO(resposta.content)) as zip_file:
