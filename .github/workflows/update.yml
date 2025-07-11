@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Necessário para commit/push, upload de assets em releases e para criar releases
-      # A linha 'releases: write' foi removida, pois 'contents: write' já abrange esta funcionalidade.
 
     steps:
       - name: Clonar repositório
@@ -50,7 +49,7 @@ jobs:
       - name: Criar GitHub Release com CSVs
         if: success()
         id: create_release
-        uses: actions/create-release@v1.1.6 # <--- ATUALIZE AQUI PARA V1.1.6
+        uses: actions/create-release@v1.1.4 # <--- AJUSTADO PARA A VERSÃO CORRETA E EXISTENTE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
