@@ -47,20 +47,21 @@ jobs:
           # Verifica se há alterações para comitar antes de tentar o commit e push
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
 
+     # ...
       - name: Criar GitHub Release com CSVs
-        # Cria um novo release no GitHub
-        if: success() # Este passo só roda se os anteriores forem bem-sucedidos
-        id: create_release # ID para referenciar nos passos seguintes
-        uses: actions/create-release@v1.1.4 # Versão atualizada para evitar o aviso "set-output deprecated"
+        if: success()
+        id: create_release
+        uses: actions/create-release@v1.1.6 # <--- ATUALIZE AQUI PARA V1.1.6
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token de segurança padrão do GitHub Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: data-${{ github.run_number }} # Tag única para cada release (ex: data-123)
-          release_name: Dados SUSEP - ${{ github.event.release.tag_name }} # Nome do release
-          draft: false # Publica o release imediatamente
-          prerelease: false # Não marca como pré-lançamento
+          tag_name: data-${{ github.run_number }}
+          release_name: Dados SUSEP - ${{ github.event.release.tag_name }}
+          draft: false
+          prerelease: false
+# ...
 
-      - name: Upload Ses_cias.csv para o Release
+- name: Upload Ses_cias.csv para o Release
         # Faz o upload do Ses_cias.csv como um asset do release
         if: success()
         uses: actions/upload-release-asset@v1
