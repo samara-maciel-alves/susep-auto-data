@@ -3,17 +3,14 @@ name: Atualizar dados SUSEP
 on:
   schedule:
     - cron: '0 9 * * 1'  # toda segunda-feira às 9h UTC (4h BRT)
-  workflow_dispatch:
+  workflow_dispatch: # Permite a execução manual do workflow
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Mantenha esta permissão
-      # Adicione a permissão para criar releases, se ainda não tiver
-      # Se a job já tem 'contents: write', 'releases: write' é geralmente incluído,
-      # mas é bom ser explícito se houver problemas.
-      # releases: write
+      contents: write # Necessário para commit/push e para upload de assets em releases
+      releases: write # Necessário para criar releases
 
     steps:
       - name: Clonar repositório
@@ -25,49 +22,58 @@ jobs:
           python-version: '3.10'
 
       - name: Instalar dependências
+        # Consolidado todas as dependências em uma única linha
         run: pip install pandas openpyxl xlrd requests certifi urllib3
 
       - name: Configurar Git LFS
+        # Garante que o Git LFS esteja instalado e inicializado
+        # e informa quais arquivos ele deve rastrear (.csv na pasta data/)
         run: |
           git lfs install
           git lfs track "data/*.csv"
-          git add .gitattributes || true
+          # Adiciona o .gitattributes ao stage para que seja comitado
+          git add .gitattributes || true # '|| true' para evitar falha se não houver alterações
 
       - name: Rodar script de atualização
         run: python scripts/main.py
 
       - name: Commit e push dos arquivos extraídos
+        # Configura o usuário Git e tenta comitar/pushar as alterações (incluindo .gitattributes e CSVs LFS)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          # Adiciona todos os CSVs recém-criados e o .gitattributes (se modificado)
           git add .gitattributes data/*.csv || true
+          # Verifica se há alterações para comitar antes de tentar o commit e push
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
 
-      # --- NOVO BLOCO: Criar Release e Anexar CSVs ---
       - name: Criar GitHub Release com CSVs
-        if: success() # Garante que só roda se os passos anteriores forem bem-sucedidos
-        id: create_release # Id para referenciar no próximo passo
-        uses: actions/create-release@v1
+        # Cria um novo release no GitHub
+        if: success() # Este passo só roda se os anteriores forem bem-sucedidos
+        id: create_release # ID para referenciar nos passos seguintes
+        uses: actions/create-release@v1.1.4 # Versão atualizada para evitar o aviso "set-output deprecated"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token padrão do GitHub Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token de segurança padrão do GitHub Actions
         with:
-          tag_name: data-${{ github.run_number }} # Tag única para cada release
+          tag_name: data-${{ github.run_number }} # Tag única para cada release (ex: data-123)
           release_name: Dados SUSEP - ${{ github.event.release.tag_name }} # Nome do release
-          draft: false
-          prerelease: false
+          draft: false # Publica o release imediatamente
+          prerelease: false # Não marca como pré-lançamento
 
-      - name: Upload CSVs para o Release
+      - name: Upload Ses_cias.csv para o Release
+        # Faz o upload do Ses_cias.csv como um asset do release
         if: success()
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # URL de upload do release criado
-          asset_path: ./data/Ses_cias.csv # Caminho para o seu arquivo CSV
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # URL de upload obtida do passo anterior
+          asset_path: ./data/Ses_cias.csv # Caminho do arquivo a ser uploadado
           asset_name: Ses_cias.csv # Nome que o arquivo terá no release
-          asset_content_type: text/csv # Tipo de conteúdo do arquivo
+          asset_content_type: text/csv # Tipo de conteúdo
 
       - name: Upload Ses_ramos.csv para o Release
+        # Faz o upload do Ses_ramos.csv como um asset do release
         if: success()
         uses: actions/upload-release-asset@v1
         env:
@@ -79,6 +85,7 @@ jobs:
           asset_content_type: text/csv
 
       - name: Upload Ses_seguros.csv para o Release
+        # Faz o upload do Ses_seguros.csv como um asset do release
         if: success()
         uses: actions/upload-release-asset@v1
         env:
@@ -88,4 +95,3 @@ jobs:
           asset_path: ./data/Ses_seguros.csv
           asset_name: Ses_seguros.csv
           asset_content_type: text/csv
-      # --- FIM DO NOVO BLOCO ---
