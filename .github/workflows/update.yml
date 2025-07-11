@@ -9,8 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Necessário para commit/push e para upload de assets em releases
-      releases: write # Necessário para criar releases
+      contents: write # Necessário para commit/push, upload de assets em releases e para criar releases
+      # A linha 'releases: write' foi removida, pois 'contents: write' já abrange esta funcionalidade.
 
     steps:
       - name: Clonar repositório
