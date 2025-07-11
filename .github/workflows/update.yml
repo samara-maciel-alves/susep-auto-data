@@ -9,7 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Já adicionado, mas mantenha-o para permissão de escrita
+      contents: write # Mantenha esta permissão
+      # Adicione a permissão para criar releases, se ainda não tiver
+      # Se a job já tem 'contents: write', 'releases: write' é geralmente incluído,
+      # mas é bom ser explícito se houver problemas.
+      # releases: write
 
     steps:
       - name: Clonar repositório
@@ -23,18 +27,11 @@ jobs:
       - name: Instalar dependências
         run: pip install pandas openpyxl xlrd requests certifi urllib3
 
-      # --- NOVO BLOCO: Configurar Git LFS ---
       - name: Configurar Git LFS
         run: |
-          # Garante que o Git LFS esteja instalado e inicializado no ambiente
           git lfs install
-          # Informa ao Git LFS para rastrear todos os arquivos .csv dentro da pasta 'data/'
-          # Isso cria ou atualiza o arquivo .gitattributes
           git lfs track "data/*.csv"
-          # Adiciona o .gitattributes ao stage, para que ele seja comitado
-          # O "|| true" evita que o comando falhe se o arquivo não tiver sido modificado ou já estiver no stage
           git add .gitattributes || true
-      # --- FIM DO NOVO BLOCO ---
 
       - name: Rodar script de atualização
         run: python scripts/main.py
@@ -43,7 +40,52 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          # Adiciona tanto o .gitattributes (se ele ainda não estiver no stage) quanto os arquivos CSV
-          # O .gitattributes é crucial para o Git LFS saber como lidar com os arquivos grandes
           git add .gitattributes data/*.csv || true
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
+
+      # --- NOVO BLOCO: Criar Release e Anexar CSVs ---
+      - name: Criar GitHub Release com CSVs
+        if: success() # Garante que só roda se os passos anteriores forem bem-sucedidos
+        id: create_release # Id para referenciar no próximo passo
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token padrão do GitHub Actions
+        with:
+          tag_name: data-${{ github.run_number }} # Tag única para cada release
+          release_name: Dados SUSEP - ${{ github.event.release.tag_name }} # Nome do release
+          draft: false
+          prerelease: false
+
+      - name: Upload CSVs para o Release
+        if: success()
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # URL de upload do release criado
+          asset_path: ./data/Ses_cias.csv # Caminho para o seu arquivo CSV
+          asset_name: Ses_cias.csv # Nome que o arquivo terá no release
+          asset_content_type: text/csv # Tipo de conteúdo do arquivo
+
+      - name: Upload Ses_ramos.csv para o Release
+        if: success()
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./data/Ses_ramos.csv
+          asset_name: Ses_ramos.csv
+          asset_content_type: text/csv
+
+      - name: Upload Ses_seguros.csv para o Release
+        if: success()
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./data/Ses_seguros.csv
+          asset_name: Ses_seguros.csv
+          asset_content_type: text/csv
+      # --- FIM DO NOVO BLOCO ---
