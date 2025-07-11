@@ -47,7 +47,6 @@ jobs:
           # Verifica se há alterações para comitar antes de tentar o commit e push
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados SUSEP" && git push)
 
-     # ...
       - name: Criar GitHub Release com CSVs
         if: success()
         id: create_release
@@ -59,9 +58,8 @@ jobs:
           release_name: Dados SUSEP - ${{ github.event.release.tag_name }}
           draft: false
           prerelease: false
-# ...
 
-- name: Upload Ses_cias.csv para o Release
+      - name: Upload Ses_cias.csv para o Release
         # Faz o upload do Ses_cias.csv como um asset do release
         if: success()
         uses: actions/upload-release-asset@v1
